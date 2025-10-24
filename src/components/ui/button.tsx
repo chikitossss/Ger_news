@@ -1,13 +1,6 @@
 import * as React from "react";
-
-function Slot({ children, ...props }: any) {
-  if (!React.isValidElement(children)) return null;
-  const child = React.Children.only(children) as React.ReactElement<any>;
-  // merge className while letting other props passed to Slot override child's props
-  const mergedClassName = [child.props.className, props.className].filter(Boolean).join(" ");
-  return React.cloneElement(child, { ...child.props, ...props, className: mergedClassName });
-}
-import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "@radix-ui/react-slot@1.1.2";
+import { cva, type VariantProps } from "class-variance-authority@0.7.1";
 
 import { cn } from "./utils";
 
