@@ -1,14 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
+    "target": "ES2020",                     // целевая версия JS
+    "module": "CommonJS",                   // для Node.js
+    "rootDir": "src",                       // корневая папка исходников
+    "outDir": "dist",                       // куда компилировать
+    "strict": true,                         // включаем строгую проверку типов
+    "esModuleInterop": true,                // для совместимости с импортами CommonJS
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "resolveJsonModule": true,
+    "baseUrl": "./src",                     // базовая папка для абсолютных импортов
+    "paths": {
+      "*": ["*"]                            // можно писать import { X } from "service/newsService"
+    }
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

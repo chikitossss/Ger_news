@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { FeaturedArticle } from './components/FeaturedArticle';
 import { ArticleCard } from './components/ArticleCard';
@@ -11,107 +11,52 @@ const featuredArticle = {
   title: 'Global Leaders Convene for Historic Climate Summit',
   description: 'World leaders gather in unprecedented numbers to discuss actionable climate solutions and commit to carbon neutrality targets.',
   category: 'Breaking News',
-  image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmVha2luZyUyMG5ld3N8ZW58MXx8fHwxNzYxMjg4MzYyfDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
+  image: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
   author: 'Sarah Mitchell',
   time: '2 hours ago'
 };
 
-const articles = [
-  {
-    id: 1,
-    title: 'Revolutionary AI System Transforms Medical Diagnostics',
-    description: 'New artificial intelligence platform achieves 99% accuracy in early disease detection, promising to save millions of lives.',
-    category: 'Technology',
-    image: 'https://images.unsplash.com/photo-1568952433726-3896e3881c65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZWNobm9sb2d5JTIwaW5ub3ZhdGlvbnxlbnwxfHx8fDE3NjEyMzQ5MjN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'David Chen',
-    time: '3 hours ago'
-  },
-  {
-    id: 2,
-    title: 'Stock Markets Reach Record Highs Amid Economic Recovery',
-    description: 'Major indices post gains as investors show renewed confidence in global economic outlook and corporate earnings.',
-    category: 'Business',
-    image: 'https://images.unsplash.com/photo-1709715357520-5e1047a2b691?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MXx8fHwxNzYxMjk2NTg2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Emily Rodriguez',
-    time: '5 hours ago'
-  },
-  {
-    id: 3,
-    title: 'Championship Final: Underdog Team Claims Victory',
-    description: 'In a stunning upset, the third-seeded team defeats defending champions in a nail-biting overtime finish.',
-    category: 'Sports',
-    image: 'https://images.unsplash.com/photo-1565483276060-e6730c0cc6a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzcG9ydHMlMjBzdGFkaXVtfGVufDF8fHx8MTc2MTIxMzM1Nnww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Marcus Johnson',
-    time: '6 hours ago'
-  },
-  {
-    id: 4,
-    title: 'Scientists Discover Groundbreaking Cancer Treatment',
-    description: 'Breakthrough research unveils targeted therapy with minimal side effects, offering hope to millions of patients worldwide.',
-    category: 'Science',
-    image: 'https://images.unsplash.com/photo-1614934273187-c83f8780fad9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzY2llbmNlJTIwbGFib3JhdG9yeXxlbnwxfHx8fDE3NjEzMTY0OTV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Dr. Lisa Wang',
-    time: '8 hours ago'
-  },
-  {
-    id: 5,
-    title: 'Explore the Hidden Gems of Southeast Asia',
-    description: 'Travel experts reveal the most stunning and underrated destinations that should be on every adventurer\'s bucket list.',
-    category: 'Travel',
-    image: 'https://images.unsplash.com/photo-1578894381163-e72c17f2d45f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b3JsZCUyMHRyYXZlbHxlbnwxfHx8fDE3NjEzMjkyNDV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Amanda Foster',
-    time: '10 hours ago'
-  },
-  {
-    id: 6,
-    title: 'Music Festival Announces Star-Studded Lineup',
-    description: 'Organizers confirm biggest names in music for summer\'s most anticipated festival, tickets selling out in minutes.',
-    category: 'Entertainment',
-    image: 'https://images.unsplash.com/photo-1566150951155-4a59643d8a9f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlbnRlcnRhaW5tZW50JTIwY29uY2VydHxlbnwxfHx8fDE3NjEyNDUyMjJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'James Martinez',
-    time: '12 hours ago'
-  },
-  {
-    id: 7,
-    title: 'New Study Reveals Benefits of Mediterranean Diet',
-    description: 'Research confirms significant health advantages of traditional Mediterranean eating patterns for longevity and wellbeing.',
-    category: 'Health',
-    image: 'https://images.unsplash.com/photo-1535914254981-b5012eebbd15?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGglMjB3ZWxsbmVzc3xlbnwxfHx8fDE3NjEyODk0NTV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Dr. Rachel Green',
-    time: '14 hours ago'
-  },
-  {
-    id: 8,
-    title: 'Tech Giants Announce Major Sustainability Initiative',
-    description: 'Leading technology companies commit to carbon-neutral operations by 2030, investing billions in renewable energy.',
-    category: 'Technology',
-    image: 'https://images.unsplash.com/photo-1568952433726-3896e3881c65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0ZWNobm9sb2d5JTIwaW5ub3ZhdGlvbnxlbnwxfHx8fDE3NjEyMzQ5MjN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Alex Thompson',
-    time: '16 hours ago'
-  },
-  {
-    id: 9,
-    title: 'Small Business Boom: Entrepreneurship on the Rise',
-    description: 'Record numbers of new businesses launched this quarter as innovative startups reshape the economic landscape.',
-    category: 'Business',
-    image: 'https://images.unsplash.com/photo-1709715357520-5e1047a2b691?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMG1lZXRpbmd8ZW58MXx8fHwxNzYxMjk2NTg2fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral',
-    author: 'Nina Patel',
-    time: '18 hours ago'
-  }
-];
+interface News {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  image?: string;
+  link: string;
+  author: string;
+  time: string;
+}
 
 export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [serverArticles, setServerArticles] = useState<News[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Подгрузка новостей с бекенда
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/news");
+        const data: News[] = await res.json();
+        setServerArticles(data);
+      } catch (err) {
+        console.error("Ошибка при загрузке новостей:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, []);
 
   const filteredArticles = selectedCategory === 'All' 
-    ? articles 
-    : articles.filter(article => article.category === selectedCategory);
+    ? serverArticles 
+    : serverArticles.filter(article => article.category === selectedCategory);
 
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
         <Header />
-        
+
         <main className="container mx-auto px-4 py-8">
           {/* Featured Article */}
           <section className="mb-12">
@@ -137,11 +82,20 @@ export default function App() {
 
           {/* Articles Grid */}
           <section>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredArticles.map((article) => (
-                <ArticleCard key={article.id} {...article} />
-              ))}
-            </div>
+            {loading ? (
+              <p>Загрузка новостей...</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               {filteredArticles.map((article) => (
+  <ArticleCard
+    key={article.id}
+    {...article}
+    image={article.image || "https://via.placeholder.com/600x400"} // подставляем заглушку, если нет картинки
+  />
+))}
+
+              </div>
+            )}
           </section>
         </main>
 

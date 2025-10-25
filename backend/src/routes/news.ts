@@ -1,19 +1,23 @@
 import { Router } from "express";
-import { News } from "../models/news";
-import { sendNews } from "../services/telegramBot";
+import { fetchAllNews } from "../services/newsService";
 
 const router = Router();
-let newsList: News[] = [];
+let newsList: any[] = [];
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
   res.json(newsList);
 });
 
-router.post("/", (req, res) => {
-  const news: News = { id: Date.now(), ...req.body };
-  newsList.unshift(news);
-  sendNews(news); // отправляем автоматически в Telegram
-  res.status(201).json(news);
-});
+// Автоматическое обновление новостей каждые 1.5 часа
+async function updateNews() {
+  const fetched = await fetchAllNews();
+  newsList = fetched; // заменяем старый массив
+  console.log(`Обновлено новостей: ${newsList.length}`);
+}
+
+// Запускаем сразу при старте
+updateNews();
+// И повторяем каждые 1.5 часа (5400 секунд)
+setInterval(updateNews, 5400 * 1000);
 
 export default router;

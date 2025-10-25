@@ -4,18 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "bot": "ts-node src/bot/newsBot.ts",
+    "fetch-news": "ts-node src/services/newsService.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@vitalets/google-translate-api": "^9.2.1",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "google-translate-api": "^2.3.0",
     "node-telegram-bot-api": "^0.66.0",
     "rss-parser": "^3.13.0"
   },
