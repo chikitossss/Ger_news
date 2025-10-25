@@ -1,91 +1,112 @@
+// src/bot/newsBot.ts
 import TelegramBot from "node-telegram-bot-api";
+import { fetchAllNews as fetchNewsAPI } from "./newsapiService";
+import { fetchAllNews as fetchGuardianNews } from "./guardianService";
+import dotenv from "dotenv";
+import { Translate } from "@google-cloud/translate/build/src/v2";
+dotenv.config();
 
-// Local NewsItem type and a simple fetchAllNews stub to avoid missing-module compile errors.
-// Replace this stub with the real implementation or restore the service module when available.
-export interface NewsItem {
-  id: string;
-  title: string;
-  description?: string;
-  photo?: string;
-  video?: string;
+const bot = new TelegramBot(process.env.TELEGRAM_TOKEN!, { polling: false });
+const chatId = process.env.TELEGRAM_CHAT_ID!;
+
+// Настройка Google Translate
+const translate = new Translate({
+  projectId: process.env.GOOGLE_PROJECT_ID,
+  key: process.env.GOOGLE_API_KEY,
+});
+
+// Функция перевода
+async function translateText(text: string, target: string = "ru") {
+  try {
+    const [translation] = await translate.translate(text, target);
+    return translation;
+  } catch (err) {
+    console.error("Ошибка перевода:", err);
+    return text; // если перевод не удался — возвращаем оригинал
+  }
 }
 
-export async function fetchAllNews(): Promise<NewsItem[]> {
-  // TODO: implement actual fetching from your backend; returning empty array to satisfy types for now.
-  return [];
+// Форматирование новости
+function formatMessage(title: string, description: string, url: string) {
+  return `<b>${title}</b>\n${description}\n\n` +
+         `<a href="${url}">Оригинал</a> | ` +
+         `<a href="https://t.me/your_channel">Подписаться</a> | ` +
+         `<a href="https://yourwebsite.com">Наш сайт</a>`;
 }
 
-// ===== Настройки =====
-const TOKEN = "8431433486:AAEg6PX6MnnXn7dB_n8redyKXk9YPDlCK_0";
-const CHAT_ID = "-1002964146420"; // ваш канал
-const OUR_SITE = "https://ваш-сайт.com";
-const SUBSCRIBE_LINK = "https://t.me/wichtigernews";
+// Отправка новости в Telegram
+async function sendNews(news: { title: string; description: string; url: string; imageUrl?: string }) {
+  const translatedDescription = await translateText(news.description);
 
-// ===== Инициализация бота =====
-const bot = new TelegramBot(TOKEN, { polling: false });
-
-// ===== Очередь и история =====
-let newsQueue: NewsItem[] = [];
-const sentNewsIds = new Set<string>();
-
-// ===== Функция отправки новости =====
-async function sendNews(news: NewsItem) {
-  const caption = `<b>${news.title}</b>\n${news.description || ""}\n\n` +
-                  `<a href="${SUBSCRIBE_LINK}">Подписаться</a> | ` +
-                  `<a href="${OUR_SITE}">Наш сайт</a>`;
+  const message = formatMessage(news.title, translatedDescription, news.url);
 
   try {
-    // Если есть видео — отправляем его
-    if (news.video && news.video.startsWith("http")) {
-      await bot.sendVideo(CHAT_ID, news.video, { parse_mode: "HTML", caption });
-      console.log(`✅ Отправлено видео: ${news.title.slice(0, 50)}...`);
+    if (news.imageUrl) {
+      await bot.sendPhoto(chatId, news.imageUrl, { parse_mode: "HTML", caption: message });
+    } else {
+      await bot.sendMessage(chatId, message, { parse_mode: "HTML" });
     }
-    // Если видео нет, но есть фото — отправляем фото
-    else if (news.photo && news.photo.startsWith("http")) {
-      await bot.sendPhoto(CHAT_ID, news.photo, { parse_mode: "HTML", caption });
-      console.log(`✅ Отправлено фото: ${news.title.slice(0, 50)}...`);
-    }
-    // Если нет ни фото, ни видео — отправляем текст
-    else {
-      await bot.sendMessage(CHAT_ID, caption, { parse_mode: "HTML" });
-      console.log(`✅ Отправлено текстом: ${news.title.slice(0, 50)}...`);
-    }
-
-    sentNewsIds.add(news.id);
+    console.log(`✅ Новость отправлена: ${news.title}`);
   } catch (err) {
     console.error("❌ Ошибка отправки новости:", err);
   }
 }
 
-// ===== Подгрузка новостей с бекенда =====
-async function loadNews() {
-  try {
-    const allNews = await fetchAllNews();
-    const newArticles = allNews.filter((n: NewsItem) => !sentNewsIds.has(n.id));
-    newsQueue.push(...newArticles);
-    console.log(`📥 Загружено новых новостей: ${newArticles.length}`);
-  } catch (err) {
-    console.error("❌ Ошибка при загрузке новостей:", err);
-  }
+// Основная функция
+async function main() {
+  console.log("🚀 Бот запущен");
+
+  // Альтернируем источники
+  let toggle = true;
+
+  setInterval(async () => {
+    try {
+      let newsList;
+      if (toggle) {
+        newsList = await fetchNewsAPI(); // первая новость из NewsAPI
+      } else {
+        newsList = await fetchGuardianNews(); // следующая из Guardian
+      }
+      toggle = !toggle;
+
+      if (newsList.length > 0) {
+        // Map the provider-specific NewsItem to the shape expected by sendNews
+        const first = newsList[0] as any;
+        const mapped = {
+          title: first.title || first.webTitle || "Без заголовка",
+          description:
+            first.description ||
+            first.summary ||
+            (first.fields && (first.fields.trailText || first.fields.body)) ||
+            "",
+          url:
+            first.url ||
+            first.link ||
+            first.webUrl ||
+            (first.fields && first.fields.shortUrl) ||
+            "",
+          imageUrl:
+            first.imageUrl ||
+            first.image ||
+            (first.fields && (first.fields.thumbnail || first.fields.main)) ||
+            undefined,
+        };
+        await sendNews(mapped); // отправляем первую новость
+      }
+    } catch (err) {
+      console.error("Ошибка получения новостей:", err);
+    }
+  }, 10 * 60 * 1000); // каждые 10 минут
+
+  // Обновление очереди новостей раз в час (для примера)
+  setInterval(async () => {
+    try {
+      await fetchNewsAPI();
+      await fetchGuardianNews();
+    } catch (err) {
+      console.error("Ошибка обновления новостей:", err);
+    }
+  }, 60 * 60 * 1000);
 }
 
-// ===== Отправка следующей новости =====
-async function sendNextNews() {
-  if (newsQueue.length === 0) {
-    await loadNews();
-  }
-
-  if (newsQueue.length > 0) {
-    const next = newsQueue.shift()!;
-    await sendNews(next);
-  } else {
-    console.log("🕒 Нет новых новостей для отправки");
-  }
-}
-
-// ===== Планировщик =====
-setInterval(sendNextNews, 15 * 60 * 1000); // каждые 15 минут
-
-// ===== Старт =====
-console.log("🚀 Бот запущен. Новости будут отправляться каждые 15 минут.");
-loadNews().then(() => sendNextNews());
+main();

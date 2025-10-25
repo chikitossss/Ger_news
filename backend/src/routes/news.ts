@@ -1,23 +1,43 @@
+// src/routes/news.ts
 import { Router } from "express";
-import { fetchAllNews } from "../services/newsService";
+import { fetchAllNews as fetchNewsAPI } from "../bot/newsapiService";
+import { fetchAllNews as fetchGuardianNews } from "../bot/guardianService";
+import translate from "@vitalets/google-translate-api";
 
 const router = Router();
-let newsList: any[] = [];
 
+// GET /api/news
 router.get("/", async (req, res) => {
-  res.json(newsList);
+  try {
+    // Получаем новости с двух источников
+    const [newsAPI, guardian] = await Promise.all([
+      fetchNewsAPI(),
+      fetchGuardianNews()
+    ]);
+
+    const allNews = [...newsAPI, ...guardian];
+
+    // Если нужен перевод на русский
+    const translatedNews = await Promise.all(
+      allNews.map(async (item) => {
+        try {
+          if (item.title) {
+            const translated = await translate(item.title, { to: "ru" });
+            return { ...item, title_ru: translated.text };
+          }
+          return item;
+        } catch (err) {
+          console.error("Ошибка перевода:", err);
+          return item;
+        }
+      })
+    );
+
+    res.json(translatedNews);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Ошибка при получении новостей" });
+  }
 });
-
-// Автоматическое обновление новостей каждые 1.5 часа
-async function updateNews() {
-  const fetched = await fetchAllNews();
-  newsList = fetched; // заменяем старый массив
-  console.log(`Обновлено новостей: ${newsList.length}`);
-}
-
-// Запускаем сразу при старте
-updateNews();
-// И повторяем каждые 1.5 часа (5400 секунд)
-setInterval(updateNews, 5400 * 1000);
 
 export default router;

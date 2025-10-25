@@ -1,5 +1,1 @@
-https://www.formula1.com/en/latest/article/what-the-teams-said-friday-in-mexico-city.542stevDX8rPEDCms99Tzm
-https://www.theverge.com/news/806019/meta-facebook-instagram-tiktok-eu-dsa-findings
-https://www.malaymail.com/news/malaysia/2025/10/25/trumps-attendance-at-asean-summit-in-malaysia-sends-strong-signal-to-investors-says-miti/195811
-https://www.cnbc.com/2025/10/24/procter-gamble-pg-q1-2026-earnings.html
-https://seekingalpha.com/article/4833333-wti-oil-crude-rallies-above-60-on-fresh-us-sanctions-us-million-barrel-purchase
+console.log("Текущая очередь новостей:", newsQueue);
