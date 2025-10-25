@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 router.post("/", (req, res) => {
   const news: News = { id: Date.now(), ...req.body };
   newsList.unshift(news);
-  sendNews(news);
+  sendNews(news); // отправляем автоматически в Telegram
   res.status(201).json(news);
 });
 
